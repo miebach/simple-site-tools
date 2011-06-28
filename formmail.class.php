@@ -693,11 +693,6 @@ class formmail {
     var $mail_body="";
     var $mail_headers="";
 
-    var $answer_from ="";
-    var $answer_subject="";
-    var $answer_body="";
-    var $answer_headers="";
-
     var $expected_fields = array();
     var $chk_fields = array();
 
@@ -792,15 +787,6 @@ class formmail {
       $this->oops=$oops;
     }
 
-    function set_answer($answer_from,$answer_subject,$answer_body_file) {
-      $this->answer_from = $answer_from;
-      $this->answer_subject = $answer_subject;
-      $this->answer_body = file_get_contents1($answer_body_file);
-      if (!$this->answer_body) {
-        die ("Aus der Datei $answer_body_file konnte nicht gelesen werden (get_file_contents).");
-      }
-    }
-
     function refer($target) {
         header("Location: $target");
         exit;
@@ -820,11 +806,6 @@ class formmail {
        # enter field values into email:
        $this->mail_body = $this->replace_vars($this->mail_body);
 
-       # enter field values into answer:
-       if ($this->answer_from) {
-         $this->answer_body = $this->replace_vars($this->answer_body);
-       }
-
        # 1) send formmail to all recipients:
        $this->mail_headers = "From: " . $this->mail_from;
        
@@ -837,15 +818,6 @@ class formmail {
          if (!mail ($mail_recipient,$this->mail_subject,$this->mail_body,$this->mail_headers)) {
            die('Fehler beim versenden der E-Mail. Bitte probieren Sie es nocheinmal. '.GOBACK);
          }
-       }
-
-       # 2) send reply
-       if ($this->answer_from) {
-             $this->answer_headers = "From: $this->answer_from";
-             #this time the recipient is the sender of the form!
-                 # V1.4 some servers don't accept names in from-mail, just plain email address!!
-                 mail ($this->mail_from,$this->answer_subject,$this->answer_body,$this->answer_headers);
-                 # 3) refer to thankyou-page
        }
 
        #show_vars();
