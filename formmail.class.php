@@ -707,13 +707,6 @@ class formmail {
 	var $thankyou="";
 	var $oops="";    
 	
-	var $guestbook_file=""; #the file that contains the guestbook
-	var $guestbook_marker=""; #the marker where to insert new entries
-
-	var $entry_file=""; # new entry for guestbook, file contains html source for one entry
-	var $gb_store_path=""; # absolute path, where are the new entries stored on the server? e.g. '/gb/entries/'
-        
-        var $key=""; #random key for text-filename (guestbook-entry)
 
     function formmail() {
     }
@@ -738,10 +731,6 @@ class formmail {
 
 	function set_mail_from($mail_from){
 	  $this->mail_from = $mail_from;
-	}
-
-	function set_entry_file($filename){
-	  $this->entry_file = $filename;
 	}
 
 	function set_mail_from_field($mail_from_field){
@@ -819,10 +808,6 @@ class formmail {
 	  $this->mail_recipient = $mail_recipient;
 	}
 
-	function set_store_path($path){
-	  $this->gb_store_path = $path;
-	}
-
 	function set_thankyou($thankyou){
 	  $this->thankyou = $thankyou;
 	}
@@ -845,7 +830,7 @@ class formmail {
         exit;
     }
 
-    function process() {  # this is the main func for formmails. the main func for guestbook is process_gb()
+    function process() {  # this is the main func for formmails. 
              
        $this->test_mail_from_field();
 
@@ -897,183 +882,6 @@ class formmail {
 	   $this->refer($this->thankyou);
 	}
 
-    function store_gb_entry($mailfield,$namefield,$commentfield,$times) {
-      ## makes a textfile from the 3 values and stores it under 
-      ## a filename that includes a random key
-      ## the key is stored in $this->filekey;                  
-      ## date in german is also added!
-      
-      $fn1 = $_SERVER["DOCUMENT_ROOT"] . $this->gb_store_path;
-      $fn2 = ".php"; 
-      $sep = "\n" . '/////' . "\n";
-      
-      # make key
-      $this->key = getmicrotimekey();
-
-      #setlocale(LC_ALL, 'de_DE');
-      setlocale(LC_ALL, 'de');
-
-                     
-      $data = urlencode(($_POST[$mailfield])) . $sep . urlencode(($_POST[$namefield])). 
-                     $sep . urlencode(($_POST[$commentfield])) . $sep . urlencode($times);
-      
-      $file = $fn1 . $this->key . $fn2;    
-      
-      #echo $file; die();
-      
-      if (!$file_handle = fopen($file,"a")) { 
-        echo "Cannot open file"; 
-      } else {   
-        if (!fwrite($file_handle, $data)) { 
-          echo "Cannot write to file"; 
-        }
-      }        
-      fclose($file_handle);  
-    }              
     
-    function set_guestbook_file($fname) {
-        $this->guestbook_file = $fname;
-    }
-    
-    function set_guestbook_marker($marker) {
-        $this->guestbook_marker = $marker;
-    }
-    
-    function add_entry($id){ # adds the entry "$id" to the guestbook!
-        
-        # read the entry into $e      
-        $path1= "$this->gb_store_path$id.php";
-        $e = file_get_contents1($path1,TRUE);
-        
-        list($email,$name,$comment,$gerdate) = split("\n" . '/////' . "\n",$e);
-        $email    = urldecode($email  );  
-        $name     = urldecode($name   );  
-        $comment  = urldecode($comment);  
-        $gerdate  = urldecode($gerdate);  
-
-        # read the html-code into $h
-        $h = file_get_contents1($this->entry_file);
-        
-        # replace the vars in $h with values:
-        $h = str_replace ('#email1#',stripslashes($email),$h);
-        $h = str_replace ('#email2#',stripslashes($email),$h);
-        $h = str_replace ('#name#',stripslashes($name),$h);
-        $h = str_replace ('#date#',stripslashes($gerdate),$h);
-        $h = str_replace ('#comment#',stripslashes($comment),$h);
-                    
-        # put the marker in front of the new entry !
-        $h = "\n\n" . $this->guestbook_marker . "\n\n" . $h;
-                                                       
-        #echo $h; die();                                                       
-                                                       
-        # read the guestbook html into $g:
-        $pathto = $_SERVER["PHP_SELF"];
-        $pathto = explode('/',$pathto);          
-        array_pop($pathto); # this removes the filename at the end of the path
-        $pathto = implode('/',$pathto).'/'.$this->guestbook_file;
-        
-        $g = file_get_contents1($this->guestbook_file);
-        
-        #echo "Y".$g . $this->guestbook_file; die();
-        
-        # insert the new entry $h into $g at the position of the marker
-        $g = str_replace ($this->guestbook_marker,$h,$g);
-              
-        # write $g back to the server:
-        
-        #echo $g; die();
-                
-        if (!$file_handle = fopen($this->guestbook_file,"w")) { # open for writing
-          echo "Cannot open file"; 
-        } else {   
-          if (!fwrite($file_handle, $g)) { 
-            echo "Cannot write to file"; 
-          }
-        }
-               
-        fclose($file_handle);
-        
-        rename_server("$this->gb_store_path$id.php","$this->gb_store_path$id.old.php"); 
-         
-        #redirect user to the newly written guestbook
-        $this->refer($this->guestbook_file);
-        
-        
-        
-    }                
-                
-    function process_gb() { # this is the main func for guestbook. the main func for formmails is process()
-          
-      $id = $_GET["id"];
-      #get contents of the file
-      if ($id) { #this is a confirmation call, so add the entry and then quit
-         $this->add_entry($id);
-         return;
-      }
-      
-      $this->test_mail_from_field();
-                 
-	   # check if all fields ok
-       foreach ($this->expected_fields as $n) {
-          if (!$_POST[$n]) {
-              #if one es missing goto error page immedeately:
-     	      $this->refer($this->oops);
-     	      exit;
-          };    
-          
-          if (strip_tags($_POST[$n])!=$_POST[$n]) {
-              #if strip_tags finds a tag goto error page immedeately:
-     	      $this->refer($this->oops);
-     	      exit;
-          }
-	    }
-                          
-      $germandate = get_german_timestamp(); # on strato server setlocale did not work today
-                                                           
-      $this->store_gb_entry("email","realname","comments",$germandate);
-
-       #return the path and the filename of the actual script:
-
-       $pathto = $_SERVER["PHP_SELF"];
-       #$pathto = explode('/',$pathto);          
-       #array_pop($pathto); # this removes the filename at the end of the path
-       
-       #print_a($pathto);
-       
-       #$pathto = implode('/',$pathto);
-       $pathto = 'http://' . $_SERVER["HTTP_HOST"] . $pathto; 
-                                                                      
-       $confirmationlink= $pathto . "?id=" . $this->key;     
-            
-       $additional = array();     
-       $additional["confirmationlink"]= $confirmationlink;
-       $additional["germantimestamp"]= $germandate;
-       
-
-       # enter field values into email:
-       $this->mail_body = $this->replace_vars($this->mail_body,$additional);
-
-       #echo $this->mail_body; die();
-
-	   # send information mail
-       # V1.4 some servers don't accept names in from-mail, just plain email address!!
-       $this->mail_headers = "From: $this->mail_from\r\n"
-              ."Reply-To: $this->mail_from\r\n"
-              ."X-Mailer: PHP/" . phpversion();
-
-	   if (!mail ($this->mail_recipient,$this->mail_subject,$this->mail_body,$this->mail_headers)) {
-         die('Fehler beim versenden der E-Mail. Bitte probieren Sie es nocheinmal. '.GOBACK);
-       }
-
-       #show_vars();
-       if ($this->debug) {
-          print_a($_POST);
-          print_a($this);
-          show_vars();
-          die();
-       }
-	   $this->refer($this->thankyou);
-	}
-
 } #class
 ?>
