@@ -1,0 +1,40 @@
+Lieber Klaus,
+
+dein automatisches Formular auf example.com
+hat folgende Eingaben bekommen von:
+
+#vorname# #nachname# aus
+
+#adresse#, #ort#, #land#
+Telefon privat: #telefon_privat#
+Telefon Geschäft: #telefon_geschaeft#
+Fax: #fax#
+Email: #email#
+Geburtsjahr: #geburtsjahr#
+
+#vorname# #nachname# hat Interesse an folgendem:
+
+- gratis Journal-Abo: #gratis_journal#
+- allgemeine Unterlagen zuschicken: #unterlagen_zuschicken#
+
+Bemerkungen:
+=======================
+
+#bemerkungen#
+
+=======================
+
+
+Das automatische Formularprogramm hat #vorname# #nachname#
+ein Antwort-Mail zugeschickt mit dem Inhalt, wie unten angehängt.
+
+
+--- ENDE ---
+
+
+Sehr geehrte/r #vorname# #nachname# 
+
+Herzlichen Dank fuer Ihren Besuch auf example.comund Ihre
+Anfrage per Formular! Ihre Buchbestellung, Anmeldung oder Anfrage
+beantworten wir gerne, gleich nachdem wir sie erhalten haben.
+

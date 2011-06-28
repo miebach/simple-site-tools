@@ -1,0 +1,4 @@
+git-bash.lnk
+captcha/store/*
+!captcha/store/index.html
+

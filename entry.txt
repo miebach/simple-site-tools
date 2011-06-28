@@ -1,0 +1,10 @@
+
+    <b>Name:</b> #name#<br>
+    <b>Email: </b> <a href="mailto:#email1#">#email2#</a><br>
+    <br>
+    <b>Datum:</b> #date#<br>
+    <b>Kommentar:</b>
+    <blockquote>#comment#</blockquote>
+
+
+<hr>
