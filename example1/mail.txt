@@ -1,0 +1,6 @@
+Lieber Seiteninhaber,
+
+dein automatisches Formular auf example.com
+hat folgende Eingabe bekommen:
+
+#feld1#

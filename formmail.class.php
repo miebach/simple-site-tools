@@ -688,7 +688,7 @@ class formmail {
 
     var $debug = 0;
     var $mail_from="";
-    var $mail_recipient="";
+    var $mail_recipient_array=array("");
     var $mail_subject="";
     var $mail_body="";
     var $mail_headers="";
@@ -730,36 +730,8 @@ class formmail {
     }
 
     function set_mail_from($mail_from){
-      $this->mail_from = $mail_from;
+        $this->mail_from = $mail_from;
     }
-
-    function set_mail_from_field($mail_from_field){
-      # get mail address from post var:
-      $this->mail_from = $_POST[$mail_from_field];
-    }
-
-
-    function test_mail_from_field(){
-
-      # if no mail address given, error:
-      if (!$this->mail_from) {
-        if ($this->debug) {
-            echo "Keine Email-Adresse angegeben";
-            die();
-        }
-        $this->refer($this->oops);
-      }
-
-      #check for valid mail address:
-      if (!eregi ("^([a-z0-9_]|\\-|\\.)+@(([a-z0-9_]|\\-)+\\.)+[a-z]{2,4}$", $this->mail_from)) {
-        if ($this->debug) {
-            echo "Die Email-Adresse $this->mail_from wurde als ungültig erkannt";
-            die();
-        }
-        $this->refer($this->oops);
-      }
-    }
-
 
     function set_mail_subject($mail_subject){
       $this->mail_subject = $mail_subject;
@@ -805,7 +777,11 @@ class formmail {
     }
 
     function set_mail_recipient($mail_recipient){
-      $this->mail_recipient = $mail_recipient;
+      if (is_array($mail_recipient)) {
+        $this->mail_recipient_array = $mail_recipient;
+      } else {
+        $this->mail_recipient_array = array($mail_recipient);
+      }
     }
 
     function set_thankyou($thankyou){
@@ -832,8 +808,6 @@ class formmail {
 
     function process() {  # this is the main func for formmails. 
              
-       $this->test_mail_from_field();
-
        # check if all fields ok
        foreach ($this->expected_fields as $n) {
           if (!$_POST[$n]) {
@@ -851,26 +825,28 @@ class formmail {
          $this->answer_body = $this->replace_vars($this->answer_body);
        }
 
-       # 1) send formmail
-       $this->mail_headers = "From: $this->mail_from\r\n"
-              ."Reply-To: $this->mail_from\r\n"
-              ."X-Mailer: PHP/" . phpversion();
-
-       if (!mail ($this->mail_recipient,$this->mail_subject,$this->mail_body,$this->mail_headers)) {
-         die('Fehler beim versenden der E-Mail. Bitte probieren Sie es nocheinmal. '.GOBACK);
+       # 1) send formmail to all recipients:
+       $this->mail_headers = "From: " . $this->mail_from;
+       
+       foreach ($this->mail_recipient_array as $mail_recipient) { 
+                
+         #$this->mail_headers = "From: $this->mail_from\r\n"
+         #       ."Reply-To: $this->mail_from\r\n" # don't do this!
+         #       ."X-Mailer: PHP/" . phpversion(); # don't do this!
+  
+         if (!mail ($mail_recipient,$this->mail_subject,$this->mail_body,$this->mail_headers)) {
+           die('Fehler beim versenden der E-Mail. Bitte probieren Sie es nocheinmal. '.GOBACK);
+         }
        }
 
        # 2) send reply
-           if ($this->answer_from) {
-
-                 $this->answer_headers = "From: $this->answer_from\r\n"
-                        ."Reply-To: $this->answer_from\r\n"
-                        ."X-Mailer: PHP/" . phpversion();
-                 #this time the recipient is the sender of the form!
-                     # V1.4 some servers don't accept names in from-mail, just plain email address!!
-                     mail ($this->mail_from,$this->answer_subject,$this->answer_body,$this->answer_headers);
-                     # 3) refer to thankyou-page
-          }
+       if ($this->answer_from) {
+             $this->answer_headers = "From: $this->answer_from";
+             #this time the recipient is the sender of the form!
+                 # V1.4 some servers don't accept names in from-mail, just plain email address!!
+                 mail ($this->mail_from,$this->answer_subject,$this->answer_body,$this->answer_headers);
+                 # 3) refer to thankyou-page
+       }
 
        #show_vars();
        if ($this->debug) {
@@ -881,7 +857,6 @@ class formmail {
        }
        $this->refer($this->thankyou);
     }
-
     
 } #class formmail
 ?>
